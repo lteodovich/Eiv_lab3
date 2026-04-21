@@ -4,8 +4,6 @@ Facultad de Ciencias Exactas y Tecnologia
 Universidad Nacional de Tucuman
 https://facetvirtual.facet.unt.edu.ar/course/view.php?id=165
 
-Copyright 2016-2025, Esteban Volentini <evolentini@herrera.unt.edu.ar>
-
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
 the Software without restriction, including without limitation the rights to
@@ -60,8 +58,7 @@ int main(void) {
     /** @brief Instancia local con los datos del alumno de ejemplo. */    
     alumno_t puntero_alum = AlumnoCreate("Perez", "Pedro", (uint32_t)(123456789));
 
-    char serial_json[256];
-    //char serial_json[10];
+    char serial_json[256];    
     
     int len = AlumnoSerializar(puntero_alum, serial_json, sizeof(serial_json));
 

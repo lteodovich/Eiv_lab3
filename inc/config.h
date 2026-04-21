@@ -4,8 +4,6 @@ Facultad de Ciencias Exactas y Tecnologia
 Universidad Nacional de Tucuman
 https://facetvirtual.facet.unt.edu.ar/course/view.php?id=165
 
-Copyright 2016-2025, Esteban Volentini <evolentini@herrera.unt.edu.ar>
-
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
 the Software without restriction, including without limitation the rights to
@@ -34,7 +32,12 @@ SPDX-License-Identifier: MIT
  **/
 
 #define CREATE_MALLOC_ON
+
+#ifndef CREATE_MALLOC_ON
+
 #define ALUMNO_MAX_INSTANCES 10
+
+#endif
 
 /* === Headers files inclusions ==================================================================================== */
 

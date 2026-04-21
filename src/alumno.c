@@ -4,8 +4,6 @@ Facultad de Ciencias Exactas y Tecnologia
 Universidad Nacional de Tucuman
 https://facetvirtual.facet.unt.edu.ar/course/view.php?id=165
 
-Copyright 2016-2026, Esteban Volentini <evolentini@herrera.unt.edu.ar>
-
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
 the Software without restriction, including without limitation the rights to
@@ -38,24 +36,40 @@ SPDX-License-Identifier: MIT
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
+/* === Macros definitions ====================================================================== */
+
+/* === Private data type declarations ========================================================== */
+
+/** @brief Estructura privada que representa a un alumno. */
 struct alumno_s {
     char apellido[30];  /**< Apellido del alumno en formato de cadena C. */
     char nombre[30];    /**< Nombre del alumno en formato de cadena C. */
     char documento[13]; /**< Documento del alumno en formato de cadena C. */
+    bool no_libre;      /**< Bandera negada que indica que instancia está libre. */
 };
+
+/* === Private function declarations =========================================================== */
+
+/* === Private variable definitions ============================================================ */
+
+/* === Public variable definition  ============================================================= */
+
+/* === Private function definitions ============================================================ */
 
 #ifndef CREATE_MALLOC_ON
 
 /** @brief Asigna una instancia de alumno de un pool predefinido.
  * @return Un puntero a una instancia de alumno, o NULL si no hay instancias disponibles.
  */
-alumno_t AlumnoAllocate(void){
+static alumno_t AlumnoAllocate(void){
     static struct alumno_s inst_alumnos[ALUMNO_MAX_INSTANCES] = {0};
     alumno_t resultado = NULL;
     int ind;
     for (ind = 0; ind < ALUMNO_MAX_INSTANCES; ind++) {
-        if (inst_alumnos[ind].documento[0] == '\0') { // Verifica si la instancia está libre
+        if (inst_alumnos[ind].no_libre == false) { // Verifica si la instancia está libre
+            inst_alumnos[ind].no_libre = true; // Marca la instancia como ocupada
             resultado = &inst_alumnos[ind];
             break;
         }
@@ -64,43 +78,6 @@ alumno_t AlumnoAllocate(void){
 }
 
 #endif
-
-/** @brief Crea una nueva instancia de alumno con los datos proporcionados.
- * @param apellido Apellido del alumno.
- * @param nombre Nombre del alumno.
- * @param documento Documento del alumno como número entero sin formato.
- * @return Un puntero a la nueva instancia de alumno creada, o NULL si hubo un error en la creación.
- */
-alumno_t AlumnoCreate(const char * apellido, const char * nombre, const uint32_t documento){
-    if (apellido == NULL || nombre == NULL) {
-        return NULL;
-    }
-
-    #ifdef CREATE_MALLOC_ON
-
-    alumno_t self = malloc(sizeof(struct alumno_s));
-
-    #else
-
-    alumno_t self = AlumnoAllocate();
-
-    #endif
-
-    if (self == NULL) {
-        return NULL; // Error al asignar memoria
-    }
-
-    // Copia segura de las cadenas con límite de tamaño
-    strncpy(self->apellido, apellido, sizeof(self->apellido) - 1);
-    self->apellido[sizeof(self->apellido) - 1] = '\0'; // Asegura terminación nula
-
-    strncpy(self->nombre, nombre, sizeof(self->nombre) - 1);
-    self->nombre[sizeof(self->nombre) - 1] = '\0'; // Asegura terminación nula
-        
-    snprintf(self->documento, sizeof(self->documento), "%u", documento); // Convierte el número a cadena
-
-    return self;
-}
 
 /** @brief Valida que una cadena contenga solo letras y espacios.
  * @param texto Cadena a validar.
@@ -180,19 +157,37 @@ static int SerializaNumero(char * cadena, const int espacio, const char * campo,
     return escrito;
 }
 
-/** @brief Serializa una coma en la cadena.
- * @param cadena Puntero a la cadena donde se guardará la coma.
- * @param espacio Tamaño disponible en la cadena.
- * @return El número de caracteres escritos (1 para la coma), o un valor negativo en caso de error.
- */
-static int SerializaComa(char * cadena, const int espacio) {
-    if (cadena == NULL || espacio <= 0) return -1;
+/* === Public function implementation ========================================================== */
 
-    int escrito = snprintf(cadena, espacio, ",");
-    if (escrito < 0 || escrito >= espacio) {
-        return -1; // Error o espacio insuficiente
+alumno_t AlumnoCreate(const char * apellido, const char * nombre, const uint32_t documento){
+    if (apellido == NULL || nombre == NULL) {
+        return NULL;
     }
-    return escrito;
+
+    #ifdef CREATE_MALLOC_ON
+
+    alumno_t self = malloc(sizeof(struct alumno_s));
+
+    #else
+
+    alumno_t self = AlumnoAllocate();
+
+    #endif
+
+    if (self == NULL) {
+        return NULL; // Error al asignar memoria
+    }
+
+    // Copia de las cadenas con límite de tamaño
+    strncpy(self->apellido, apellido, sizeof(self->apellido) - 1);
+    self->apellido[sizeof(self->apellido) - 1] = '\0'; // Asegura terminación nula
+
+    strncpy(self->nombre, nombre, sizeof(self->nombre) - 1);
+    self->nombre[sizeof(self->nombre) - 1] = '\0'; // Asegura terminación nula
+        
+    snprintf(self->documento, sizeof(self->documento), "%u", documento); // Convierte el número a cadena
+
+    return self;
 }
 
 /** @brief Agrega una cadena en formato JSON a la cadena principal.
@@ -205,12 +200,6 @@ static int SerializaComa(char * cadena, const int espacio) {
         offset += escrito; \
     } while(0)
 
-/** @brief Serializa los datos de un alumno en formato JSON.
- * @param self Puntero al alumno a serializar.
- * @param cadena Puntero a la cadena donde se guardará el JSON.
- * @param espacio Tamaño disponible en la cadena.
- * @return El número de caracteres escritos en la cadena, o un valor negativo en caso de error.
- */
 int AlumnoSerializar(const alumno_t self, char * cadena, int espacio) {
     // Validaciones de punteros y espacio
     if (self == NULL || cadena == NULL || espacio <= 0) return 0;
